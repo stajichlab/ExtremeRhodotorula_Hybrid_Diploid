@@ -1,5 +1,5 @@
 #!/usr/bin/bash -l
-#SBATCH -c 32 -n 1 -N 1 --mem 32gb --out logs/ksd.%a.log
+#SBATCH -c 32 -n 1 -N 1 --mem 96gb --out logs/ksd.%a.log
 
 CPU=2
 if [ ! -z $SLURM_CPUS_ON_NODE ]; then
@@ -28,13 +28,14 @@ KSDIST=$OUTDIR/$STRAIN/ksd/$(basename $INFILE).tsv.ks.tsv
 mkdir -p $OUTDIR/$STRAIN
 
 if [ ! -f $RBH ]; then
-    wgd dmd -o $OUTDIR/$STRAIN/dmd $INFILE -t $SCRATCH -n $CPU
+    time wgd dmd -o $OUTDIR/$STRAIN/dmd $INFILE -t $SCRATCH -n $CPU
 fi
 
 if [ ! -f $KSDIST  ]; then
-    wgd ksd $RBH $INFILE -o $OUTDIR/$STRAIN/ksd -t $SCRATCH -n $CPU
+    time wgd ksd $RBH $INFILE -o $OUTDIR/$STRAIN/ksd -t $SCRATCH -n $CPU
 fi
 
-#if [ ! -s $OUTDIR/$STRAIN/ ]; then
-    wgd peak $KSDIST -o $OUTDIR/$STRAIN/wgd_peak > $OUTDIR/$STRAIN/wgd_peak.txt
-#fi
+if [ ! -s $OUTDIR/$STRAIN/wgd_peak/AIC_BIC.pdf ]; then
+    echo $KSDIST
+    time wgd peak $KSDIST -o $OUTDIR/$STRAIN/wgd_peak --heuristic -kc 3 --ksrange 0 2 --xlim 0 2 > $OUTDIR/$STRAIN/wgd_peak.txt
+fi
